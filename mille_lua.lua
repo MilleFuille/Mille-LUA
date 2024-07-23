@@ -56,30 +56,7 @@ end
 --- Spearfishing function
 function main_spearfishing()
     while not stop_script do
-        if check_duty_queue() then
-            stop_spearfishing("stop")
-        end
-        interrupt_casting()
-        while (GetCharacterCondition(45)) and not IsPlayerAvailable() do
-            yield("/wait " .. interval_rate)
-        end
-        if not GetCharacterCondition(6) then
-            consume_item("food")
-        end
-        if check_duty_queue() then
-            stop_spearfishing("stop")
-        end
-        interrupt_casting()
-        while (GetCharacterCondition(45)) and not IsPlayerAvailable() do
-            yield("/wait " .. interval_rate)
-        end
-        if not GetCharacterCondition(6) then
-            consume_item("potion")
-        end
-        interrupt_casting()
-        while (GetCharacterCondition(45)) and not IsPlayerAvailable() do
-            yield("/wait " .. interval_rate)
-        end
+        food_potion_check()
         if spear_init then
             spear_init = false
             start_spearfishing("start")
@@ -115,38 +92,15 @@ function main_spearfishing()
         wait_next_loop()
     end
 end
+
 --- Gathering function
 function main_gathering()
     while not stop_script do
-        if check_duty_queue() then
-            stop_gathering("stop")
-        end
-        interrupt_casting()
-        while (GetCharacterCondition(45)) and not IsPlayerAvailable() do
-            yield("/wait " .. interval_rate)
-        end
-        if not GetCharacterCondition(6) then
-            consume_item("food")
-        end
-        if check_duty_queue() then
-            stop_gathering("stop")
-        end
-        interrupt_casting()
-        while (GetCharacterCondition(45)) and not IsPlayerAvailable() do
-            yield("/wait " .. interval_rate)
-        end
-        if not GetCharacterCondition(6) then
-            consume_item("potion")
-        end
-        interrupt_casting()
-        while (GetCharacterCondition(45)) and not IsPlayerAvailable() do
-            yield("/wait " .. interval_rate)
-        end
+        food_potion_check()
         if gather_init then
             gather_init = false
             start_gathering("start")
         end
-
         if (check_repair_extract_reduce()) then
             stop_gathering("pause")
             interrupt_casting()
@@ -175,6 +129,17 @@ function main_gathering()
             return false
         end
         wait_next_loop()
+    end
+end
+
+function food_potion_check()
+    check_duty_queue()
+    if not GetCharacterCondition(6) then
+        consume_item("food")
+    end
+    check_duty_queue()
+    if not GetCharacterCondition(6) then
+        consume_item("potion")
     end
 end
 
@@ -251,6 +216,16 @@ function consume_item(state)
         end
     
         if not HasStatus("Well Fed") then
+            echo_out("Food Checks.")
+            if gather_method == "gathering" then
+                stop_gathering("pause")
+            elseif gather_method == "spearfishing" then
+                stop_spearfishing("pause")
+            end 
+            interrupt_casting()
+            while (GetCharacterCondition(45)) and not IsPlayerAvailable() do
+                yield("/wait " .. interval_rate)
+            end
             local timeout_start = os.clock()
             local user_settings = {
                 GetSNDProperty("UseItemStructsVersion"),
@@ -280,6 +255,11 @@ function consume_item(state)
             SetSNDProperty("UseItemStructsVersion", tostring(user_settings[1]))
             SetSNDProperty("StopMacroIfItemNotFound", tostring(user_settings[2]))
             SetSNDProperty("StopMacroIfCantUseItem", tostring(user_settings[3]))
+            if gather_method == "gathering" then
+                start_gathering("resume")
+            elseif gather_method == "spearfishing" then
+                start_spearfishing("resume")
+            end 
             return true
         else
             return true
@@ -293,6 +273,16 @@ function consume_item(state)
         end
     
         if not HasStatus("Medicated") then
+            echo_out("Potion Checks.")
+            if gather_method == "gathering" then
+                stop_gathering("pause")
+            elseif gather_method == "spearfishing" then
+                stop_spearfishing("pause")
+            end 
+            interrupt_casting()
+            while (GetCharacterCondition(45)) and not IsPlayerAvailable() do
+                yield("/wait " .. interval_rate)
+            end
             local timeout_start = os.clock()
             local user_settings = {
                 GetSNDProperty("UseItemStructsVersion"),
@@ -322,6 +312,11 @@ function consume_item(state)
             SetSNDProperty("UseItemStructsVersion", tostring(user_settings[1]))
             SetSNDProperty("StopMacroIfItemNotFound", tostring(user_settings[2]))
             SetSNDProperty("StopMacroIfCantUseItem", tostring(user_settings[3]))
+            if gather_method == "gathering" then
+                start_gathering("resume")
+            elseif gather_method == "spearfishing" then
+                start_spearfishing("resume")
+            end
             return true
         else
             return true
@@ -337,6 +332,11 @@ function check_duty_queue()
     if GetCharacterCondition(59) then
         stop_script = true
         echo_out("Detected duty pop, stopping script.")
+        if gather_method == "gathering" then
+            stop_gathering("stop")
+        elseif gather_method == "spearfishing" then
+            stop_spearfishing("stop")
+        end 
         return true
     end
     return false
