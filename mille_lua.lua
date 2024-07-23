@@ -109,17 +109,19 @@ function main_gathering()
             end
             yield("/wait 1.5")
             if auto_repair then
+                echo_out("Gear Checks")
                 repair_gear()
             end
             if auto_extract then
+                echo_out("Materia Checks")
                 extract_materia()
             end
             if auto_reduce then
+                echo_out("Reduce Checks")
                 reduce_item()
             end
-            if check_duty_queue() then
-                stop_gathering("stop")
-            end
+            check_duty_queue()
+            echo_out("Finished Checks.")
             start_gathering("resume")
         end
         if GetInventoryFreeSlotCount() <= inventory_threshold_cap then
@@ -473,7 +475,7 @@ function extract_materia()
 end
 
 function reduce_item()
-    if reductibles_found then
+    if reductibles_found or check_reducibles() then
         echo_out("Aetherial Reducting.")
         stop_movement_flying()
         character_dismount()
