@@ -4,7 +4,7 @@
 
 --- General Configuration
 gather_method = "gathering"  -- Gathering method, only accept "spearfishing" or "gathering"
-consumables_food = false        -- Food name(ie. "[Name of food]"), or {"[Name of food 1]", "[Name of food 2]"} or "[Name of food] <hq>"
+consumables_food = "Boiled Egg"        -- Food name(ie. "[Name of food]"), or {"[Name of food 1]", "[Name of food 2]"} or "[Name of food] <hq>"
 consumables_potion = "Superior Spiritbond Potion <hq>"      -- Potion name(ie. "[Name of potion]"), or {"[Name of potion 1]", "[Name of potion 2]"} or "[Name of potion] <hq>"
 auto_repair = true              -- Configuration for auto gear repair (SELF REPAIR ONLY)
 auto_extract = true             -- Configuration for auto materia extraction
@@ -114,7 +114,7 @@ local function consume_item(state, wait_timeout)
         if GetZoneID() == 1055 then
             return false
         end
-        if not HasStatus("Well Fed") then
+        if not HasStatusId(48) then -- if not HasStatus("Well Fed") then
             echo_out("Food Checks.")
             if gather_method == "gathering" then
                 stop_gathering("pause")
@@ -139,18 +139,20 @@ local function consume_item(state, wait_timeout)
                 if type(consumables_food) == "string" then
                     echo_out("Attempt to consume " .. consumables_food)
                     yield("/item " .. consumables_food)
+                    wait_action(3) -- yield("/wait " .. math.max(interval_rate, 1))
                 elseif type(consumables_food) == "table" then
                     for _, food in ipairs(consumables_food) do
                         echo_out("Attempt to consume food list " .. food)
                         yield("/item " .. food)
-                        wait_action(1) -- yield("/wait " .. math.max(interval_rate, 1))
-                        if HasStatus("Well Fed") then
+                        wait_action(3) -- yield("/wait " .. math.max(interval_rate, 1))
+                        if HasStatusId(48) then -- if HasStatus("Well Fed") then
                             break
                         end
                     end
                 end
+                echo_out("mooder")
                 wait_action(1) -- yield("/wait " .. math.max(interval_rate, 1))
-            until HasStatus("Well Fed") or os.clock() - timeout_start > wait_timeout
+            until HasStatusId(48) or os.clock() - timeout_start > wait_timeout -- until HasStatus("Well Fed") or os.clock() - timeout_start > wait_timeout
             SetSNDProperty("UseItemStructsVersion", tostring(user_settings[1]))
             SetSNDProperty("StopMacroIfItemNotFound", tostring(user_settings[2]))
             SetSNDProperty("StopMacroIfCantUseItem", tostring(user_settings[3]))
@@ -170,7 +172,7 @@ local function consume_item(state, wait_timeout)
         if GetZoneID() == 1055 then
             return false
         end
-        if not HasStatus("Medicated") then
+        if not HasStatusId(49) then -- if not HasStatus("Medicated") then
             echo_out("Potion Checks.")
             if gather_method == "gathering" then
                 stop_gathering("pause")
@@ -198,14 +200,14 @@ local function consume_item(state, wait_timeout)
                     for _, pot in ipairs(consumables_potion) do 
                         echo_out("Attempt to consume potion list " .. pot)
                         yield("/item " .. pot)
-                        wait_action(1) -- yield("/wait " .. math.max(interval_rate, 1))
-                        if HasStatus("Medicated") then
+                        wait_action(3) -- yield("/wait " .. math.max(interval_rate, 1))
+                        if HasStatusId(49) then -- if HasStatus("Medicated") then
                             break
                         end
                     end
                 end
                 wait_action(1) -- yield("/wait " .. math.max(interval_rate, 1))
-            until HasStatus("Medicated") or os.clock() - timeout_start > wait_timeout
+            until HasStatusId(49) or os.clock() - timeout_start > wait_timeout -- until HasStatus("Medicated") or os.clock() - timeout_start > wait_timeout
             SetSNDProperty("UseItemStructsVersion", tostring(user_settings[1]))
             SetSNDProperty("StopMacroIfItemNotFound", tostring(user_settings[2]))
             SetSNDProperty("StopMacroIfCantUseItem", tostring(user_settings[3]))
@@ -503,13 +505,13 @@ local function food_potion_check()
         return false
     end
     if not GetCharacterCondition(6) then
-        consume_item("food")
+        consume_item("food",10)
     end
     if check_duty_queue() then
         return false
     end
     if not GetCharacterCondition(6) then
-        consume_item("potion")
+        consume_item("potion",10)
     end
     return true
 end
